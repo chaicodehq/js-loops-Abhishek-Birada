@@ -45,5 +45,89 @@
  *   // => [{ name: "Rahul", trainNumber: "12345", class: "sleeper", status: "confirmed" }]
  */
 export function railwayReservation(passengers, trains) {
-  // Your code here
+  // Validation
+  if (
+    !Array.isArray(passengers) ||
+    !Array.isArray(trains) ||
+    passengers.length === 0 ||
+    trains.length === 0
+  ) {
+    return [];
+  }
+
+  const results = [];
+
+  // Process passengers FIFO
+  for (let i = 0; i < passengers.length; i++) {
+    const passenger = passengers[i];
+    let trainFound = false;
+    let allocationDone = false;
+
+    // Find matching train (nested loop)
+    for (let j = 0; j < trains.length; j++) {
+      const train = trains[j];
+
+      if (train.trainNumber === passenger.trainNumber) {
+        trainFound = true;
+
+        // 1️⃣ Try preferred class
+        if (
+          train.seats.hasOwnProperty(passenger.preferred) &&
+          train.seats[passenger.preferred] > 0
+        ) {
+          train.seats[passenger.preferred]--; // MUTATE seat count
+
+          results.push({
+            name: passenger.name,
+            trainNumber: passenger.trainNumber,
+            class: passenger.preferred,
+            status: "confirmed",
+          });
+
+          allocationDone = true;
+        }
+        // 2️⃣ Try fallback class
+        else if (
+          train.seats.hasOwnProperty(passenger.fallback) &&
+          train.seats[passenger.fallback] > 0
+        ) {
+          train.seats[passenger.fallback]--; // MUTATE seat count
+
+          results.push({
+            name: passenger.name,
+            trainNumber: passenger.trainNumber,
+            class: passenger.fallback,
+            status: "confirmed",
+          });
+
+          allocationDone = true;
+        }
+        // 3️⃣ Waitlist
+        else {
+          results.push({
+            name: passenger.name,
+            trainNumber: passenger.trainNumber,
+            class: passenger.preferred,
+            status: "waitlisted",
+          });
+
+          allocationDone = true;
+        }
+
+        break; // Stop searching trains once matched
+      }
+    }
+
+    // 4️⃣ Train not found
+    if (!trainFound) {
+      results.push({
+        name: passenger.name,
+        trainNumber: passenger.trainNumber,
+        class: null,
+        status: "train_not_found",
+      });
+    }
+  }
+
+  return results;
 }
